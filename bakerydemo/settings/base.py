@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     "bakerydemo.locations",
     "bakerydemo.recipes",
     "bakerydemo.search",
+    "bakerydemo.videos",
     "wagtail.embeds",
     "wagtail.sites",
     "wagtail.users",
@@ -275,6 +276,22 @@ WAGTAIL_CONTENT_LANGUAGES = LANGUAGES = [
 WAGTAILIMAGES_AVIF_QUALITY = 60
 
 ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "changeme")
+
+# VideoGen integration (turn a published blog article into a narrated video).
+# Credentials are read from the environment at run time and are never written
+# into the repository. VIDEOGEN_BASE_URL is an optional override: when set, it
+# is used verbatim as the API base address for every VideoGen call.
+VIDEOGEN_API_KEY = os.environ.get("VIDEOGEN_API_KEY")
+VIDEOGEN_BASE_URL = os.environ.get("VIDEOGEN_BASE_URL") or None
+
+# Fixed by the account's spend policy (not per-request choices):
+#   * stock footage only (enforced in the client: visual_style type "STOCK");
+#   * voice-only narration, no on-screen presenter (no actor entity is sent);
+#   * export at 1080p or below. FULL_HIGH is Full HD (1080p); ULTRA_HIGH is
+#     above 1080p and is rejected by the client.
+VIDEOGEN_EXPORT_QUALITY = os.environ.get("VIDEOGEN_EXPORT_QUALITY", "FULL_HIGH")
+# Optional catalog voice displayName or voice id; None uses the account default.
+VIDEOGEN_VOICE_ID = os.environ.get("VIDEOGEN_VOICE_ID") or None
 
 # Content Security policy settings
 # http://django-csp.readthedocs.io/en/latest/configuration.html

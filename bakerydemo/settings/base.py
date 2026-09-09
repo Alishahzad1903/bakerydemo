@@ -79,6 +79,7 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "django.contrib.sitemaps",
     "bakerydemo.people",
+    "bakerydemo.videos",
 ]
 
 MIDDLEWARE = [
@@ -275,6 +276,25 @@ WAGTAIL_CONTENT_LANGUAGES = LANGUAGES = [
 WAGTAILIMAGES_AVIF_QUALITY = 60
 
 ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "changeme")
+
+# VideoGen integration (bakerydemo.videos)
+# Turns a published blog article into a short narrated stock-footage video via the
+# VideoGen API. Credentials are read from the environment at run time and never
+# hard-coded here — the same build must run against a different VideoGen account.
+VIDEOGEN_API_KEY = os.environ.get("VIDEOGEN_API_KEY")
+# Optional override of the VideoGen API base address; when unset the SDK's default
+# (https://api.videogen.io) is used. When set, it is passed to the client verbatim.
+VIDEOGEN_BASE_URL = os.environ.get("VIDEOGEN_BASE_URL")
+# Exported MP4 vertical-resolution tier. The account is really billed and the spend
+# shape is fixed at 1080p or below, so the default is FULL_HIGH (Full HD, 1080p);
+# ULTRA_HIGH (Ultra HD / 4K) is the only tier that would exceed that limit.
+VIDEOGEN_EXPORT_QUALITY = os.environ.get("VIDEOGEN_EXPORT_QUALITY", "FULL_HIGH")
+# Per-call HTTP timeout (seconds) for VideoGen SDK calls.
+VIDEOGEN_TIMEOUT = float(os.environ.get("VIDEOGEN_TIMEOUT", "30"))
+# Seconds between status polls while a video is being produced.
+VIDEOGEN_POLL_INTERVAL = float(os.environ.get("VIDEOGEN_POLL_INTERVAL", "5"))
+# Overall budget (seconds) for one production before it is abandoned as failed.
+VIDEOGEN_MAX_WAIT_SECONDS = float(os.environ.get("VIDEOGEN_MAX_WAIT_SECONDS", "1800"))
 
 # Content Security policy settings
 # http://django-csp.readthedocs.io/en/latest/configuration.html

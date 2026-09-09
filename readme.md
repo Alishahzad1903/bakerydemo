@@ -210,6 +210,51 @@ wt api pages get 76
 wt api pages create base.StandardPage --parent 60 --title "Demo page"
 ```
 
+### Article videos (VideoGen)
+
+The site can turn a published blog article into a short narrated MP4 using
+[VideoGen](https://videogen.io/), exposed as additive endpoints on the same
+`/api/v3-preview/` API. Narration is built from the article's own title and the
+first sentence of its introduction (≤30 words → a ~10-15s clip), rendered with
+stock footage and a voiceover at 720p, 16:9.
+
+Configuration (read from the environment at runtime; never commit the values):
+
+```bash
+export VIDEOGEN_API_KEY=<your VideoGen API key>
+# Optional: override the VideoGen API base URL (used verbatim when set).
+# export VIDEOGEN_BASE_URL=https://api.videogen.io
+```
+
+Endpoints (authenticated with the same `Authorization: Bearer <token>` API
+tokens as the rest of the v3 API; restricted to callers permitted to **publish**
+the target page):
+
+```bash
+TOKEN=wagtail_C3qhlJUUj75vWvK5bbcb73bZ4JC4cQKWt   # the demo admin token
+
+# Start producing a video for a published blog article (returns immediately).
+curl -sX POST -H "Authorization: Bearer $TOKEN" \
+  http://localhost:8000/api/v3-preview/pages/62/video/
+# -> {"videoJobId": "..."}
+
+# Poll the job until it is ready (or has failed).
+curl -s -H "Authorization: Bearer $TOKEN" \
+  http://localhost:8000/api/v3-preview/pages/62/video/<videoJobId>/
+# -> {"status": "succeeded", "progressPercentage": 100,
+#     "downloadUrl": ".../download/", "error": null}
+
+# Download the finished MP4 (this is where downloadUrl points).
+curl -sL -H "Authorization: Bearer $TOKEN" -o article.mp4 \
+  http://localhost:8000/api/v3-preview/pages/62/video/<videoJobId>/download/
+```
+
+`status` is `pending`/`processing` (still being produced), `succeeded` (ready,
+`downloadUrl` set) or `failed` (`error` set). Producing a video is idempotent —
+asking twice for the same article returns the same job and never produces (or
+bills) a second video. Production runs in a background thread; no task queue or
+broker is required.
+
 ### Note on demo search
 
 Because we can't (easily) use ElasticSearch for this demo, we use wagtail's native DB search.

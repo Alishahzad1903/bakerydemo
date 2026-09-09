@@ -79,6 +79,7 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "django.contrib.sitemaps",
     "bakerydemo.people",
+    "bakerydemo.videos",
 ]
 
 MIDDLEWARE = [
@@ -273,6 +274,24 @@ WAGTAIL_CONTENT_LANGUAGES = LANGUAGES = [
 ]
 
 WAGTAILIMAGES_AVIF_QUALITY = 60
+
+# VideoGen integration (bakerydemo.videos)
+# -----------------------------------------
+# Credentials and endpoint are read from the environment at runtime and are
+# never committed to the repository. ``VIDEOGEN_API_KEY`` is required to
+# produce a video; ``VIDEOGEN_BASE_URL`` is an optional override used verbatim
+# as the API base address (the SDK defaults to https://api.videogen.io when it
+# is unset).
+VIDEOGEN_API_KEY = os.environ.get("VIDEOGEN_API_KEY", "")
+VIDEOGEN_BASE_URL = os.environ.get("VIDEOGEN_BASE_URL") or None
+
+# Bound how long a single video-production run may take end to end (seconds)
+# and how often its provider jobs are polled. Kept as settings so deployments
+# can tune them without code changes.
+VIDEOGEN_PRODUCTION_TIMEOUT = int(os.environ.get("VIDEOGEN_PRODUCTION_TIMEOUT", "1800"))
+VIDEOGEN_POLL_INTERVAL = float(os.environ.get("VIDEOGEN_POLL_INTERVAL", "5"))
+# Per-HTTP-request timeout for individual VideoGen SDK calls (seconds).
+VIDEOGEN_REQUEST_TIMEOUT = float(os.environ.get("VIDEOGEN_REQUEST_TIMEOUT", "30"))
 
 ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "changeme")
 

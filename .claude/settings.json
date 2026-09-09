@@ -1,0 +1,24 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "hooks": [
+          {
+            "command": "powershell -NoProfile -ExecutionPolicy Bypass -File \"C:\\claude-runs\\t7alishahzad-task7-mcp-opus48high-003\\repo\\.claude\\hooks\\maxio-process-guard.ps1\"",
+            "type": "command"
+          }
+        ],
+        "matcher": "Bash|PowerShell"
+      },
+      {
+        "hooks": [
+          {
+            "command": "powershell -NoProfile -ExecutionPolicy Bypass -File \"C:\\claude-runs\\t7alishahzad-task7-mcp-opus48high-003\\repo\\.claude\\hooks\\task7-web-guard.ps1\"",
+            "type": "command"
+          }
+        ],
+        "matcher": "WebSearch|WebFetch"
+      }
+    ]
+  }
+}

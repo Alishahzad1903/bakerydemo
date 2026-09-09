@@ -10,6 +10,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/stable/ref/settings/
 """
 
+import json
 import os
 
 import dj_database_url
@@ -43,6 +44,7 @@ INSTALLED_APPS = [
     "bakerydemo.locations",
     "bakerydemo.recipes",
     "bakerydemo.search",
+    "bakerydemo.videos",
     "wagtail.embeds",
     "wagtail.sites",
     "wagtail.users",
@@ -275,6 +277,64 @@ WAGTAIL_CONTENT_LANGUAGES = LANGUAGES = [
 WAGTAILIMAGES_AVIF_QUALITY = 60
 
 ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "changeme")
+
+# VideoGen integration (bakerydemo.videos)
+# ----------------------------------------
+# Turns a published blog article into a short narrated MP4 via VideoGen.
+# Credentials are read from the environment at run time and are never written
+# into the repository. The same build can target a different VideoGen account
+# by changing only these environment variables.
+#
+# VIDEOGEN_API_KEY   (required to actually produce a video) - API bearer token.
+# VIDEOGEN_BASE_URL  (optional) - overrides the API base address verbatim when
+#                    set; otherwise the client uses VideoGen's default.
+VIDEOGEN_API_KEY = os.environ.get("VIDEOGEN_API_KEY", "")
+VIDEOGEN_BASE_URL = os.environ.get("VIDEOGEN_BASE_URL") or None
+
+# Visual style for the produced video. VideoGen's script-to-video workflow
+# *requires* a ``visualStyle`` object, and the task mandates stock footage only
+# (never AI-generated imagery). Supply the stock-footage visual style for your
+# account here as a JSON object, e.g. VIDEOGEN_VISUAL_STYLE='{"type": "..."}'.
+#
+# NOTE (documented gap): the value that selects *stock footage* is not published
+# in the VideoGen `api` skill that is this integration's sole reference — the
+# skill only documents `visualStyle.type == "AI_IMAGE"`, which the task forbids.
+# So no default is hard-coded here: a wrong guess would either request AI imagery
+# or spend the (real, billed) single video on an unverified configuration. Set
+# this to the correct stock value for your account and the flow runs end to end.
+# See docs/videogen.md.
+def _videogen_json_env(name):
+    raw = os.environ.get(name)
+    if not raw:
+        return None
+    try:
+        return json.loads(raw)
+    except json.JSONDecodeError:
+        return None
+
+
+VIDEOGEN_VISUAL_STYLE = _videogen_json_env("VIDEOGEN_VISUAL_STYLE")
+
+# Cost control: the narration is the article's title plus the first sentence of
+# its introduction, capped to this many words to keep the clip ~10-15 seconds.
+VIDEOGEN_MAX_SCRIPT_WORDS = int(os.environ.get("VIDEOGEN_MAX_SCRIPT_WORDS", "30"))
+
+# Polling / timeout behaviour for the background pipeline.
+VIDEOGEN_POLL_INTERVAL_SECONDS = float(
+    os.environ.get("VIDEOGEN_POLL_INTERVAL_SECONDS", "5")
+)
+VIDEOGEN_TIMEOUT_SECONDS = float(os.environ.get("VIDEOGEN_TIMEOUT_SECONDS", "1800"))
+VIDEOGEN_HTTP_TIMEOUT_SECONDS = float(
+    os.environ.get("VIDEOGEN_HTTP_TIMEOUT_SECONDS", "60")
+)
+
+# Advanced (optional) passthrough params for a different account/plan, e.g. a
+# specific narration voice on the script request or an export resolution on the
+# export request. Left empty so the request stays the minimal, cheapest shape
+# (voice-only narration, single non-4K 16:9 export). ``visualStyle`` may also be
+# provided here instead of via VIDEOGEN_VISUAL_STYLE.
+VIDEOGEN_SCRIPT_PARAMS: dict = {}
+VIDEOGEN_EXPORT_PARAMS: dict = {}
 
 # Content Security policy settings
 # http://django-csp.readthedocs.io/en/latest/configuration.html

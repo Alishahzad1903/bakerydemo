@@ -210,6 +210,48 @@ wt api pages get 76
 wt api pages create base.StandardPage --parent 60 --title "Demo page"
 ```
 
+### Producing article videos (VideoGen)
+
+The site can turn a published blog article into a short, narrated MP4 using
+[VideoGen](https://videogen.io). This is exposed as an additive part of the
+existing v3 API (`bakerydemo/video/`) and does not change any existing page,
+blog, image or admin behaviour.
+
+Configuration (read from the environment via Django settings, never hard-coded):
+
+- `VIDEOGEN_API_KEY` — **required** to produce a video.
+- `VIDEOGEN_BASE_URL` — optional; overrides the API base address verbatim.
+
+Endpoints (bearer-authenticated exactly like the rest of the v3 API, and
+restricted to callers permitted to **publish** the target page):
+
+| Method & path | Purpose |
+| --- | --- |
+| `POST /api/v3-preview/pages/{page_id}/video/` | Start producing a video. Returns `202` with `videoJobId` (or `200` with the existing job if one already exists — asking twice never produces or bills a second video). |
+| `GET /api/v3-preview/pages/{page_id}/video/{videoJobId}/` | Report `status` (`pending`/`processing`/`ready`/`failed`), `progressPercentage`, `downloadUrl` (when ready) and `error` (when failed). |
+| `GET /api/v3-preview/pages/{page_id}/video/{videoJobId}/download/` | Stream the finished MP4, stored on the site for as long as the article exists. |
+
+The narration is built only from the article's own title and the first sentence
+of its introduction — the article is never sent elsewhere to be rewritten. The
+video is produced with the cheapest shape: stock footage only, a voice-only
+narration, exported once at 720p in 16:9.
+
+Example (using the seeded admin token):
+
+```bash
+export TOKEN=wagtail_C3qhlJUUj75vWvK5bbcb73bZ4JC4cQKWt
+BASE=http://localhost:8000/api/v3-preview/pages/62/video/
+
+# Start (62 is "Tracking Wild Yeast")
+JOB=$(curl -s -X POST -H "Authorization: Bearer $TOKEN" "$BASE" | python -c "import sys,json;print(json.load(sys.stdin)['videoJobId'])")
+
+# Poll until "ready"
+curl -s -H "Authorization: Bearer $TOKEN" "$BASE$JOB/"
+
+# Download the MP4
+curl -L -H "Authorization: Bearer $TOKEN" "$BASE$JOB/download/" -o article.mp4
+```
+
 ### Note on demo search
 
 Because we can't (easily) use ElasticSearch for this demo, we use wagtail's native DB search.

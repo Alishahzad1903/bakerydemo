@@ -79,6 +79,7 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "django.contrib.sitemaps",
     "bakerydemo.people",
+    "bakerydemo.video",
 ]
 
 MIDDLEWARE = [
@@ -260,6 +261,13 @@ WAGTAILSEARCH_BACKENDS = {
         "INDEX": "bakerydemo",
     },
 }
+
+# VideoGen integration (see bakerydemo/video/).
+# Credentials are read from the environment at run time and never hard-coded.
+# VIDEOGEN_API_KEY is required to produce a video; VIDEOGEN_BASE_URL is an
+# optional override used verbatim as the API base address when set.
+VIDEOGEN_API_KEY = os.environ.get("VIDEOGEN_API_KEY")
+VIDEOGEN_BASE_URL = os.environ.get("VIDEOGEN_BASE_URL", "https://api.videogen.io")
 
 # Wagtail settings
 WAGTAIL_SITE_NAME = "The Wagtail Bakery"

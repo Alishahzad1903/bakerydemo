@@ -24,3 +24,6 @@ __pycache__
 /bakerydemo/cache
 !.gitignore
 bakerydemo/collect_static
+
+# [provision] task-7 content arm docs: on disk for the agent, never committed
+/videogen-docs/

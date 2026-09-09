@@ -10,8 +10,13 @@ from wagtail.documents import urls as wagtaildocs_urls
 from wagtail.images.views.serve import ServeView
 
 from bakerydemo.search import views as search_views
+from bakerydemo.video.api import router as video_router
 
 from .api import api_router
+
+# Mount the additive "article to video" endpoints under the existing v3 preview
+# pages API. Routers must be registered before ``api.urls`` is accessed below.
+api.add_router("/pages/", video_router)
 
 urlpatterns = [
     path("django-admin/", admin.site.urls),

@@ -79,6 +79,7 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "django.contrib.sitemaps",
     "bakerydemo.people",
+    "bakerydemo.video",
 ]
 
 MIDDLEWARE = [
@@ -275,6 +276,23 @@ WAGTAIL_CONTENT_LANGUAGES = LANGUAGES = [
 WAGTAILIMAGES_AVIF_QUALITY = 60
 
 ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "changeme")
+
+# VideoGen integration (bakerydemo/video/)
+# Turns a published blog article into a short narrated MP4 via VideoGen.
+# Credentials are read from the environment at run time and never hard-coded.
+# VIDEOGEN_BASE_URL, when set, is used verbatim as the API base address.
+VIDEOGEN_API_KEY = os.environ.get("VIDEOGEN_API_KEY")
+VIDEOGEN_BASE_URL = os.environ.get("VIDEOGEN_BASE_URL")
+# Export quality tier. Kept at STANDARD so the exported MP4 stays at/below
+# 1080p (ULTRA_HIGH is the 4K tier). Override only with a <=1080p tier.
+VIDEOGEN_EXPORT_QUALITY = os.environ.get("VIDEOGEN_EXPORT_QUALITY", "STANDARD")
+# Optional narration voice (catalog displayName or voice id). Default voice when unset.
+VIDEOGEN_VOICE_ID = os.environ.get("VIDEOGEN_VOICE_ID")
+VIDEOGEN_ASPECT_RATIO = os.environ.get("VIDEOGEN_ASPECT_RATIO", "16:9")
+# Polling / HTTP tuning (seconds).
+VIDEOGEN_POLL_INTERVAL = int(os.environ.get("VIDEOGEN_POLL_INTERVAL", "5"))
+VIDEOGEN_POLL_TIMEOUT = int(os.environ.get("VIDEOGEN_POLL_TIMEOUT", "1800"))
+VIDEOGEN_HTTP_TIMEOUT = int(os.environ.get("VIDEOGEN_HTTP_TIMEOUT", "30"))
 
 # Content Security policy settings
 # http://django-csp.readthedocs.io/en/latest/configuration.html

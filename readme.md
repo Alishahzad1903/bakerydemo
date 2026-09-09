@@ -210,6 +210,36 @@ wt api pages get 76
 wt api pages create base.StandardPage --parent 60 --title "Demo page"
 ```
 
+### Article-to-video API (VideoGen)
+
+An additive capability (in `bakerydemo/video/`) turns a published blog article
+into a short, narrated MP4 using [VideoGen](https://videogen.io), exposed on the
+existing v3 preview API and authenticated with the same bearer API tokens.
+Producing a video is an editorial action, so it is restricted to callers
+permitted to **publish** that page.
+
+Configure credentials via environment variables (never committed): `VIDEOGEN_API_KEY`,
+and optionally `VIDEOGEN_BASE_URL` (used verbatim as the API base address).
+
+```bash
+# Start producing a video for a published blog article (returns immediately).
+curl -X POST http://localhost:8000/api/v3-preview/pages/62/video/ \
+  -H "Authorization: Bearer $WAGTAIL_CLI_TOKEN"
+# -> 202 {"videoJobId": "…"}
+
+# Poll the job. status is one of pending | processing | ready | failed.
+curl http://localhost:8000/api/v3-preview/pages/62/video/<videoJobId>/ \
+  -H "Authorization: Bearer $WAGTAIL_CLI_TOKEN"
+# -> {"videoJobId": "…", "status": "ready", "progressPercentage": 100,
+#     "downloadUrl": "https://…​.mp4", "error": null}
+```
+
+The narration is built only from the article's own title, introduction and the
+first three body paragraphs. Requesting a video twice for the same article
+returns the existing job — it is never produced or billed twice. Videos export
+at 1080p or below (stock footage, voice-only). See `bakerydemo/video/README.md`
+for design details.
+
 ### Note on demo search
 
 Because we can't (easily) use ElasticSearch for this demo, we use wagtail's native DB search.

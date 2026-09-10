@@ -10,8 +10,13 @@ from wagtail.documents import urls as wagtaildocs_urls
 from wagtail.images.views.serve import ServeView
 
 from bakerydemo.search import views as search_views
+from bakerydemo.videogen.api import register_video_api
 
 from .api import api_router
+
+# Attach the article-video endpoints to the shared v3 API before its URLs are
+# built below (Django Ninja forbids adding routers after ``api.urls``).
+register_video_api(api)
 
 urlpatterns = [
     path("django-admin/", admin.site.urls),

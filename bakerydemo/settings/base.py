@@ -79,6 +79,7 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "django.contrib.sitemaps",
     "bakerydemo.people",
+    "bakerydemo.videogen",
 ]
 
 MIDDLEWARE = [
@@ -275,6 +276,24 @@ WAGTAIL_CONTENT_LANGUAGES = LANGUAGES = [
 WAGTAILIMAGES_AVIF_QUALITY = 60
 
 ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "changeme")
+
+# VideoGen integration
+# -----------------------------------------------------------------------------
+# Credentials are read from the environment at run time and never stored in the
+# repository. ``VIDEOGEN_API_KEY`` authenticates every VideoGen call.
+# ``VIDEOGEN_BASE_URL``, when set, overrides the API base address verbatim so
+# the same build can target a different VideoGen account/environment.
+VIDEOGEN_API_KEY = os.environ.get("VIDEOGEN_API_KEY", "")
+VIDEOGEN_BASE_URL = os.environ.get("VIDEOGEN_BASE_URL", "") or None
+
+# Upper bound (words) for the generated narration script. Kept intentionally
+# short: narration is only the article title plus the first sentence of its
+# introduction, which keeps the finished clip (and its cost) small.
+VIDEOGEN_MAX_SCRIPT_WORDS = 30
+
+# How long the background worker will wait for a single VideoGen workflow run /
+# export before giving up and marking the job failed (milliseconds).
+VIDEOGEN_JOB_TIMEOUT_MS = 30 * 60 * 1000
 
 # Content Security policy settings
 # http://django-csp.readthedocs.io/en/latest/configuration.html

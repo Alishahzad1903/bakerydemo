@@ -210,6 +210,48 @@ wt api pages get 76
 wt api pages create base.StandardPage --parent 60 --title "Demo page"
 ```
 
+#### Article videos (VideoGen)
+
+The v3 API can turn a **published blog article** into a short, narrated MP4 the
+marketing team can share, produced with [VideoGen](https://videogen.io). The
+narration is built only from the article's own words — its title and the first
+sentence of its introduction — and the finished clip is stored on the site so it
+stays downloadable for as long as the article exists.
+
+These endpoints authenticate exactly like the rest of the v3 API
+(`Authorization: Bearer <token>`) and are restricted to callers who may
+**publish** the target page (e.g. `admin`, `moderator`).
+
+```bash
+# Configure your VideoGen key at run time (never commit it):
+export VIDEOGEN_API_KEY=...            # required
+export VIDEOGEN_BASE_URL=...           # optional; overrides the API base URL
+
+TOKEN=wagtail_C3qhlJUUj75vWvK5bbcb73bZ4JC4cQKWt   # admin (can publish)
+BASE=http://localhost:8000/api/v3-preview
+PAGE=62                                 # "Tracking Wild Yeast"
+
+# Start producing a video (returns immediately with a job id).
+curl -sX POST "$BASE/pages/$PAGE/video/" -H "Authorization: Bearer $TOKEN"
+# -> 202 {"videoJobId": "..."}
+
+# Poll the job until it is ready (or failed).
+JOB=...     # videoJobId from the response above
+curl -s "$BASE/pages/$PAGE/video/$JOB/" -H "Authorization: Bearer $TOKEN"
+# -> {"videoJobId","status":"processing|ready|failed","progressPercentage",
+#     "downloadUrl","error"}
+
+# Once status is "ready", download the MP4 from downloadUrl.
+curl -sL "$BASE/pages/$PAGE/video/$JOB/download/" \
+  -H "Authorization: Bearer $TOKEN" -o article-video.mp4
+```
+
+Requesting a video twice for the same article is idempotent: the second call
+returns the same job (HTTP 200) and never starts a second, billable render.
+The integration only ever asks VideoGen for the cheap shape (stock footage,
+voice-only narration, a single non-4K 16:9 export). See
+`bakerydemo/videogen/` for the implementation.
+
 ### Note on demo search
 
 Because we can't (easily) use ElasticSearch for this demo, we use wagtail's native DB search.

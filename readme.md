@@ -210,6 +210,46 @@ wt api pages get 76
 wt api pages create base.StandardPage --parent 60 --title "Demo page"
 ```
 
+### Article-to-video (VideoGen)
+
+An additive capability turns a **published blog article** into a short, narrated
+MP4 (stock footage, voice-only, 720p, 16:9) via [VideoGen](https://videogen.io).
+It lives on the existing v3 API and authenticates with the same bearer tokens.
+Producing a video is an editorial action, so it is restricted to callers with
+permission to **publish** the target page.
+
+Configure the credential in your environment (see `.env.example`):
+
+```bash
+export VIDEOGEN_API_KEY=...            # your VideoGen API key (never committed)
+# export VIDEOGEN_BASE_URL=...         # optional base-URL override
+```
+
+Endpoints (all under `/api/v3-preview/pages/{page_id}/`):
+
+| Method & path | Purpose |
+| --- | --- |
+| `POST /video/` | Start producing a video. Returns `{ "videoJobId": … }`. Idempotent per article: asking twice never produces (or bills) a second video. |
+| `GET /video/{videoJobId}/` | Report `status` (`processing` / `ready` / `failed`), `progressPercentage`, `downloadUrl` (when ready), and `error` (when failed). Poll until terminal. |
+| `GET /video/{videoJobId}/download/` | Stream the finished MP4 from the site's own storage. |
+
+Example (article id `62`, "Tracking Wild Yeast", admin token):
+
+```bash
+TOKEN=wagtail_C3qhlJUUj75vWvK5bbcb73bZ4JC4cQKWt
+BASE=http://localhost:8000/api/v3-preview
+
+# 1. Start the video (returns a videoJobId)
+curl -X POST -H "Authorization: Bearer $TOKEN" "$BASE/pages/62/video/"
+
+# 2. Poll until status is "ready" (or "failed")
+curl -H "Authorization: Bearer $TOKEN" "$BASE/pages/62/video/1/"
+
+# 3. Download the finished MP4
+curl -L -H "Authorization: Bearer $TOKEN" -o wild-yeast.mp4 \
+  "$BASE/pages/62/video/1/download/"
+```
+
 ### Note on demo search
 
 Because we can't (easily) use ElasticSearch for this demo, we use wagtail's native DB search.

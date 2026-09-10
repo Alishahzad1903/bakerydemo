@@ -79,6 +79,7 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "django.contrib.sitemaps",
     "bakerydemo.people",
+    "bakerydemo.videogen",
 ]
 
 MIDDLEWARE = [
@@ -275,6 +276,13 @@ WAGTAIL_CONTENT_LANGUAGES = LANGUAGES = [
 WAGTAILIMAGES_AVIF_QUALITY = 60
 
 ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "changeme")
+
+# VideoGen integration (turn a published blog article into a shareable video).
+# Credentials are read from the environment at runtime and never hard-coded.
+# VIDEOGEN_BASE_URL is an optional override; when empty the client falls back to
+# the documented default (https://api.videogen.io).
+VIDEOGEN_API_KEY = os.environ.get("VIDEOGEN_API_KEY", "")
+VIDEOGEN_BASE_URL = os.environ.get("VIDEOGEN_BASE_URL", "")
 
 # Content Security policy settings
 # http://django-csp.readthedocs.io/en/latest/configuration.html

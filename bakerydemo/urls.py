@@ -10,8 +10,13 @@ from wagtail.documents import urls as wagtaildocs_urls
 from wagtail.images.views.serve import ServeView
 
 from bakerydemo.search import views as search_views
+from bakerydemo.videogen.api import register_video_routes
 
 from .api import api_router
+
+# Attach the additive article-to-video routes to the shared v3 API. Must happen
+# before ``api.urls`` is accessed below.
+register_video_routes(api)
 
 urlpatterns = [
     path("django-admin/", admin.site.urls),

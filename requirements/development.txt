@@ -2,3 +2,7 @@
 ruff==0.15.15
 curlylint==0.13.1
 djhtml==3.0.10
+# Type checking for the VideoGen integration (see mypy.ini). mypy is pinned <2
+# so it shares curlylint's pathspec<1 requirement; django-stubs types the ORM.
+mypy==1.19.1
+django-stubs==6.1.0

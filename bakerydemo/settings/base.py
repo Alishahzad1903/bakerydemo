@@ -79,6 +79,10 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "django.contrib.sitemaps",
     "bakerydemo.people",
+    # Additive: turns a published blog article into a short narrated video
+    # via VideoGen. Registers extra routes on the existing /api/v3-preview/ API
+    # from its AppConfig.ready(), so it is listed last.
+    "bakerydemo.videos",
 ]
 
 MIDDLEWARE = [
@@ -308,3 +312,21 @@ if "CSP_DEFAULT_SRC" in os.environ:
         CSP_FRAME_SRC = os.environ.get("CSP_FRAME_SRC").split(",")
     if "CSP_REPORT_URI" in os.environ:
         CSP_REPORT_URI = os.environ.get("CSP_REPORT_URI")
+
+
+# VideoGen integration (bakerydemo.videos)
+# ----------------------------------------
+# Credentials are read from the environment at runtime and never written into
+# the repository. VIDEOGEN_API_KEY is the bearer token for the VideoGen API.
+# VIDEOGEN_BASE_URL is an optional override for the API base address; when set
+# it is passed verbatim to the SDK, otherwise the SDK's own default is used.
+VIDEOGEN_API_KEY = os.environ.get("VIDEOGEN_API_KEY", "")
+VIDEOGEN_BASE_URL = os.environ.get("VIDEOGEN_BASE_URL") or None
+
+# How long the background producer will poll each VideoGen job before giving up
+# (seconds), and how often it polls. These bound our own polling loop only; the
+# SDK itself performs no retries.
+VIDEOGEN_POLL_INTERVAL_SECONDS = float(os.environ.get("VIDEOGEN_POLL_INTERVAL_SECONDS", "6"))
+VIDEOGEN_JOB_TIMEOUT_SECONDS = float(os.environ.get("VIDEOGEN_JOB_TIMEOUT_SECONDS", "1800"))
+# Per-request timeout handed to the SDK client (seconds).
+VIDEOGEN_REQUEST_TIMEOUT_SECONDS = float(os.environ.get("VIDEOGEN_REQUEST_TIMEOUT_SECONDS", "30"))

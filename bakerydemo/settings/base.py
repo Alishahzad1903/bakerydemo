@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     "bakerydemo.locations",
     "bakerydemo.recipes",
     "bakerydemo.search",
+    "bakerydemo.videos",
     "wagtail.embeds",
     "wagtail.sites",
     "wagtail.users",
@@ -275,6 +276,50 @@ WAGTAIL_CONTENT_LANGUAGES = LANGUAGES = [
 WAGTAILIMAGES_AVIF_QUALITY = 60
 
 ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "changeme")
+
+# --- VideoGen integration --------------------------------------------------
+# Additive capability: turn a published blog article into a short narrated
+# video via VideoGen (https://docs.videogen.io). Credentials are read from the
+# environment at runtime and are NEVER hard-coded here.
+#
+# VIDEOGEN_API_KEY       - bearer API key, required to talk to VideoGen.
+# VIDEOGEN_BASE_URL      - optional override for the API base address; when set
+#                          it is used verbatim for every VideoGen call.
+VIDEOGEN_API_KEY = os.environ.get("VIDEOGEN_API_KEY", "")
+VIDEOGEN_BASE_URL = os.environ.get("VIDEOGEN_BASE_URL", "https://api.videogen.io")
+
+# Fixed, cheap output shape (see the project brief). These are deliberate cost
+# controls, not tuneable product options.
+#   - Stock footage only (never AI-generated imagery).
+#   - 16:9 is the script-to-video default; we set it explicitly so the result
+#     is deterministic and we never need a (billed) resize afterwards.
+#   - Export quality tier. VideoGen exposes named tiers (LOW/STANDARD/HIGH/MAX)
+#     and does not publish per-tier pixel dimensions. STANDARD is the 720p-class
+#     tier and the cheapest sensible choice; MAX is the 4K tier and is never
+#     used. Overridable only to run a different account's policy, not 4K.
+# aspectRatio is a width:height ratio pair object (NOT pixel dimensions and NOT
+# a "16:9" string); 16:9 is also the workflow default.
+VIDEOGEN_ASPECT_RATIO = {"width": 16, "height": 9}
+VIDEOGEN_VISUAL_STYLE = {"type": "STOCK"}
+VIDEOGEN_EXPORT_QUALITY = os.environ.get("VIDEOGEN_EXPORT_QUALITY", "STANDARD")
+
+# Narration is built from the article's own text only: its title plus the first
+# sentence of its introduction, capped to keep the clip ~10-15s. Never the body.
+VIDEOGEN_NARRATION_MAX_WORDS = 30
+
+# Polling / HTTP behaviour for the background pipeline.
+VIDEOGEN_REQUEST_TIMEOUT_SECONDS = float(
+    os.environ.get("VIDEOGEN_REQUEST_TIMEOUT_SECONDS", "30")
+)
+VIDEOGEN_POLL_INTERVAL_SECONDS = float(
+    os.environ.get("VIDEOGEN_POLL_INTERVAL_SECONDS", "5")
+)
+VIDEOGEN_POLL_TIMEOUT_SECONDS = float(
+    os.environ.get("VIDEOGEN_POLL_TIMEOUT_SECONDS", "900")
+)
+# When truthy, run the production pipeline inline instead of in a background
+# thread. Used by the test suite; the HTTP flow stays async by default.
+VIDEOGEN_RUN_SYNC = os.environ.get("VIDEOGEN_RUN_SYNC", "") == "1"
 
 # Content Security policy settings
 # http://django-csp.readthedocs.io/en/latest/configuration.html

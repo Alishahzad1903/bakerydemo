@@ -210,6 +210,46 @@ wt api pages get 76
 wt api pages create base.StandardPage --parent 60 --title "Demo page"
 ```
 
+#### Article videos (VideoGen)
+
+As an additive capability, the v3 API can turn a published blog article into a
+short narrated video using [VideoGen](https://docs.videogen.io). The narration
+is built from the article's own words — its title and the first sentence of its
+introduction — so no text is sent elsewhere to be rewritten. Producing a video
+is an editorial action, restricted to callers permitted to publish that page
+(and authenticated with the same bearer API token as the rest of the v3 API).
+
+Configure the integration with environment variables (never commit real keys):
+
+```bash
+export VIDEOGEN_API_KEY=...            # your VideoGen API key
+# export VIDEOGEN_BASE_URL=https://api.videogen.io   # optional override
+```
+
+Endpoints (mounted under `/api/v3-preview/`):
+
+```bash
+TOKEN=wagtail_C3qhlJUUj75vWvK5bbcb73bZ4JC4cQKWt   # admin (can publish)
+
+# Start producing a video for article 62 ("Tracking Wild Yeast").
+# Returns { "videoJobId": ... }. Idempotent: asking again returns the same job.
+curl -X POST http://localhost:8000/api/v3-preview/pages/62/video/ \
+  -H "Authorization: Bearer $TOKEN"
+
+# Poll the job. status is one of pending | processing | ready | failed.
+# When ready it carries downloadUrl; when failed it carries error.
+curl http://localhost:8000/api/v3-preview/pages/62/video/<videoJobId>/ \
+  -H "Authorization: Bearer $TOKEN"
+
+# Download the finished MP4 (also linked as downloadUrl above).
+curl -L -o article.mp4 \
+  http://localhost:8000/api/v3-preview/pages/62/video/<videoJobId>/download/ \
+  -H "Authorization: Bearer $TOKEN"
+```
+
+The finished MP4 is stored on the site, so it stays downloadable for as long as
+the article exists (independent of VideoGen's short-lived signed URLs).
+
 ### Note on demo search
 
 Because we can't (easily) use ElasticSearch for this demo, we use wagtail's native DB search.

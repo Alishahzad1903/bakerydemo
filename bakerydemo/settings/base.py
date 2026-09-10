@@ -79,6 +79,7 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "django.contrib.sitemaps",
     "bakerydemo.people",
+    "bakerydemo.videos",
 ]
 
 MIDDLEWARE = [
@@ -260,6 +261,27 @@ WAGTAILSEARCH_BACKENDS = {
         "INDEX": "bakerydemo",
     },
 }
+
+# VideoGen integration ("article → shareable video")
+# ---------------------------------------------------
+# All credentials/config are read from the environment at runtime; no secret
+# VALUE is ever written into the repository. Only the variable NAMES appear here.
+#
+# VIDEOGEN_API_KEY   - bearer token for the VideoGen API (required to produce a video).
+# VIDEOGEN_BASE_URL  - optional override of the VideoGen API base address. When set it is
+#                      used verbatim; when unset/empty the SDK's default host is used.
+# VIDEOGEN_EXPORT_QUALITY - vertical-resolution tier for the exported MP4. The SDK does not
+#                      publish a tier->pixel mapping; empirically the tiers ladder as
+#                      STANDARD (720p/HD) < HIGH (1080p/Full-HD) < FULL_HIGH < ULTRA_HIGH (4K).
+#                      The task caps exports at 720p, so this defaults to STANDARD and the
+#                      client refuses ULTRA_HIGH (4K) outright.
+# VIDEOGEN_NARRATION_MAX_WORDS - hard ceiling on the narration script length (spend control).
+# VIDEOGEN_HTTP_TIMEOUT - per-request timeout (seconds) for VideoGen API calls.
+VIDEOGEN_API_KEY = os.environ.get("VIDEOGEN_API_KEY")
+VIDEOGEN_BASE_URL = os.environ.get("VIDEOGEN_BASE_URL")
+VIDEOGEN_EXPORT_QUALITY = os.environ.get("VIDEOGEN_EXPORT_QUALITY", "STANDARD")
+VIDEOGEN_NARRATION_MAX_WORDS = int(os.environ.get("VIDEOGEN_NARRATION_MAX_WORDS", "30"))
+VIDEOGEN_HTTP_TIMEOUT = float(os.environ.get("VIDEOGEN_HTTP_TIMEOUT", "60"))
 
 # Wagtail settings
 WAGTAIL_SITE_NAME = "The Wagtail Bakery"

@@ -79,6 +79,7 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "django.contrib.sitemaps",
     "bakerydemo.people",
+    "bakerydemo.videos",
 ]
 
 MIDDLEWARE = [
@@ -308,3 +309,38 @@ if "CSP_DEFAULT_SRC" in os.environ:
         CSP_FRAME_SRC = os.environ.get("CSP_FRAME_SRC").split(",")
     if "CSP_REPORT_URI" in os.environ:
         CSP_REPORT_URI = os.environ.get("CSP_REPORT_URI")
+
+# ---------------------------------------------------------------------------
+# Article video generation (VideoGen integration)
+# ---------------------------------------------------------------------------
+# Credentials and the provider address are read from the environment at run
+# time; their *values* never live in the repository.
+VIDEOGEN_API_KEY = os.environ.get("VIDEOGEN_API_KEY", "")
+
+# Optional override for the VideoGen API base address. When set it is used
+# verbatim for every VideoGen call; otherwise the client's default is used.
+VIDEOGEN_BASE_URL = os.environ.get("VIDEOGEN_BASE_URL", "")
+
+# The spend policy fixes the video shape: stock footage only (never AI-generated
+# imagery), narration by a voice only, and a single 720p / 16:9 export. Two of
+# those knobs are NOT expressible with what the VideoGen API skill documents, so
+# there is no compliant value to ship:
+#
+#   * VIDEOGEN_VISUAL_STYLE — the skill documents only workflow visualStyle
+#     {"type": "AI_IMAGE"} (which the policy forbids); no stock-footage visual
+#     style is documented.
+#   * VIDEOGEN_EXPORT_OPTIONS — POST /v1/projects/{id}/export has no documented
+#     request parameters, so a 720p / 16:9 export cannot be requested.
+#
+# They are left unset on purpose. While unset, the integration refuses to start
+# a production (raising a typed VideoGenCapabilityUnavailable) so the billed
+# account is never charged for a video whose shape would violate the policy. An
+# operator supplies these — with values the provider documents — to enable
+# production without any code change. (VIDEOGEN_EXPORT_OPTIONS = {} explicitly
+# signals "configured; send an empty export body".)
+VIDEOGEN_VISUAL_STYLE = None
+VIDEOGEN_EXPORT_OPTIONS = None
+
+# Optional workflow quality tier (LOW/STANDARD/HIGH/MAX) and remix actions.
+VIDEOGEN_QUALITY = os.environ.get("VIDEOGEN_QUALITY", "") or None
+VIDEOGEN_REMIX_ACTIONS = []

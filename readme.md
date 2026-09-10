@@ -210,6 +210,57 @@ wt api pages get 76
 wt api pages create base.StandardPage --parent 60 --title "Demo page"
 ```
 
+#### Article videos (VideoGen)
+
+The v3-preview API can turn a **published blog article** into a short, narrated
+MP4 using [VideoGen](https://videogen.io). It is additive — no existing page,
+blog, image, or admin flow changes. The narration is built only from the
+article's own words (its title plus the first sentence of its introduction,
+capped at 30 words); the article is never sent anywhere to be rewritten.
+
+Producing a video is an editorial action, so — like publishing — it is
+restricted to callers **permitted to publish that page**, authenticated with
+the same bearer token as the rest of the v3 API.
+
+```bash
+# Start producing a video for an article (async; returns immediately).
+# Idempotent: asking twice for the same article never produces/bills twice.
+curl -X POST http://localhost:8000/api/v3-preview/pages/62/video/ \
+  -H "Authorization: Bearer $WAGTAIL_CLI_TOKEN"
+# -> 202 {"videoJobId": "..."}
+
+# Poll status/outcome. status ∈ pending|running|succeeded|failed.
+curl http://localhost:8000/api/v3-preview/pages/62/video/<videoJobId>/ \
+  -H "Authorization: Bearer $WAGTAIL_CLI_TOKEN"
+# -> {"videoJobId", "status", "progressPercentage", "downloadUrl", "error"}
+
+# When status is "succeeded", downloadUrl points here — the finished MP4,
+# stored locally so it stays downloadable for as long as the article exists.
+curl -L -o article.mp4 \
+  http://localhost:8000/api/v3-preview/pages/62/video/<videoJobId>/download/ \
+  -H "Authorization: Bearer $WAGTAIL_CLI_TOKEN"
+```
+
+Configuration (read from the environment, never committed):
+
+| Setting | Env var | Purpose |
+| --- | --- | --- |
+| `VIDEOGEN_API_KEY` | `VIDEOGEN_API_KEY` | VideoGen API key (required to produce). |
+| `VIDEOGEN_BASE_URL` | `VIDEOGEN_BASE_URL` | Optional base-URL override; used verbatim when set. |
+| `VIDEOGEN_VISUAL_STYLE` | — | The stock-footage visual style for the workflow. |
+| `VIDEOGEN_EXPORT_OPTIONS` | — | The single 720p / 16:9 export options. |
+
+> **Capability note.** The spend policy fixes the video's shape (stock footage
+> only — never AI imagery; a single 720p, 16:9 export). Two of those knobs
+> (`VIDEOGEN_VISUAL_STYLE`, `VIDEOGEN_EXPORT_OPTIONS`) have no value that the
+> bundled VideoGen API skill documents — the skill only documents an
+> AI-image workflow visual style and an export endpoint that takes no
+> parameters. They are therefore left unset, and while unset the `POST`
+> endpoint returns **503** with a precise reason instead of billing the
+> account for a non-compliant video. Once the provider documents how to request
+> stock footage and a 720p/16:9 export, set these two values and production
+> works with no code change.
+
 ### Note on demo search
 
 Because we can't (easily) use ElasticSearch for this demo, we use wagtail's native DB search.

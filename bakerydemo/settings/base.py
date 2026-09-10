@@ -79,6 +79,7 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "django.contrib.sitemaps",
     "bakerydemo.people",
+    "bakerydemo.videos",
 ]
 
 MIDDLEWARE = [
@@ -275,6 +276,46 @@ WAGTAIL_CONTENT_LANGUAGES = LANGUAGES = [
 WAGTAILIMAGES_AVIF_QUALITY = 60
 
 ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "changeme")
+
+# VideoGen integration (article -> shareable video)
+# -------------------------------------------------
+# Credentials and options are read from the environment at run time; no secret
+# value is ever committed to the repository. The same build runs against a
+# different VideoGen account simply by changing these environment variables.
+#
+# Required:
+#   VIDEOGEN_API_KEY   - VideoGen API key.
+# Optional:
+#   VIDEOGEN_BASE_URL  - override the API base URL verbatim (else the SDK default).
+#
+# The remaining options pin the request to the cheapest safe shape (stock
+# footage, a narrated voice, a single 720p / 16:9 export). They are overridable
+# but default to the values this integration is designed around.
+VIDEOGEN_API_KEY = os.environ.get("VIDEOGEN_API_KEY")
+VIDEOGEN_BASE_URL = os.environ.get("VIDEOGEN_BASE_URL") or None
+
+# Visual style for the script-to-video workflow. "STOCK" selects stock footage;
+# we never opt into AI-generated imagery (e.g. the "AI_IMAGE" style). This is a
+# required field on the workflow, and stock footage is a hard requirement.
+VIDEOGEN_VISUAL_STYLE = {"type": os.environ.get("VIDEOGEN_VISUAL_STYLE_TYPE", "STOCK")}
+
+# Generation quality for the script-to-video workflow. Left unset by default so
+# the workflow uses the provider's default: stock footage is sourced, not
+# generated, so this adds no per-item cost. Set the env var to override.
+VIDEOGEN_WORKFLOW_QUALITY = os.environ.get("VIDEOGEN_WORKFLOW_QUALITY", "") or None
+
+# Export quality tier. The export endpoint offers only "STANDARD" and "HIGH" —
+# there is no 4K/UHD option at all — so "STANDARD" is the 720p-class rendition
+# and a 4K export is impossible by construction.
+VIDEOGEN_EXPORT_QUALITY = os.environ.get("VIDEOGEN_EXPORT_QUALITY", "STANDARD")
+
+# Narration budget: title + first sentence of the introduction, capped short.
+VIDEOGEN_MAX_SCRIPT_WORDS = 30
+
+# Polling cadence and ceiling for waiting on VideoGen runs/exports.
+VIDEOGEN_REQUEST_TIMEOUT_SECONDS = 60.0
+VIDEOGEN_POLL_INTERVAL_SECONDS = 3.0
+VIDEOGEN_POLL_TIMEOUT_SECONDS = 1800.0
 
 # Content Security policy settings
 # http://django-csp.readthedocs.io/en/latest/configuration.html

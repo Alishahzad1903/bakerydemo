@@ -79,6 +79,7 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "django.contrib.sitemaps",
     "bakerydemo.people",
+    "bakerydemo.videos",
 ]
 
 MIDDLEWARE = [
@@ -133,6 +134,10 @@ else:
             "NAME": os.path.join(
                 BASE_DIR, os.environ.get("DATABASE_NAME", "bakerydemodb")
             ),
+            # The video pipeline writes progress from a background thread while
+            # requests read it; give SQLite a busy timeout so those brief
+            # overlaps wait rather than raising "database is locked".
+            "OPTIONS": {"timeout": 30},
         }
     }
 
@@ -275,6 +280,42 @@ WAGTAIL_CONTENT_LANGUAGES = LANGUAGES = [
 WAGTAILIMAGES_AVIF_QUALITY = 60
 
 ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "changeme")
+
+# ---------------------------------------------------------------------------
+# VideoGen integration (bakerydemo.videos)
+#
+# Turns a published blog article into a short narrated MP4 via VideoGen.
+# Credentials are read from the environment at run time and must never be
+# committed to the repository. `VIDEOGEN_API_KEY` is required for the feature
+# to operate; `VIDEOGEN_BASE_URL` is an optional override for the API base
+# address (used verbatim when set, so a different VideoGen account/host can be
+# targeted without a code change).
+# ---------------------------------------------------------------------------
+VIDEOGEN_API_KEY = os.environ.get("VIDEOGEN_API_KEY", "")
+VIDEOGEN_BASE_URL = os.environ.get("VIDEOGEN_BASE_URL", "https://api.videogen.io")
+
+# Fixed "cheap shape" for produced videos. These are cost controls, not
+# stylistic preferences: keep them conservative.
+#   - STOCK visuals only (never AI-generated imagery)
+#   - a voiceover only (no avatar / presenter)
+#   - a single 720p export, 16:9, never resized afterwards
+#   - a very short narration (title + first sentence of the introduction)
+#
+# ExportProjectQuality is a "vertical resolution tier"; the docs do not tabulate
+# the numbers, but the ladder ascends 720p -> 1080p -> 1440p -> 4K:
+#   STANDARD == 720p, HIGH == 1080p, FULL_HIGH == 1440p, ULTRA_HIGH == 4K.
+# (Confirmed empirically: a HIGH export renders a 1920x1080 MP4.) 720p is the
+# cheapest allowed tier and the one required here, so use STANDARD.
+VIDEOGEN_VISUAL_STYLE = "STOCK"
+VIDEOGEN_EXPORT_QUALITY = "STANDARD"  # 720p vertical resolution tier
+VIDEOGEN_ASPECT_RATIO = (16, 9)
+VIDEOGEN_NARRATION_MAX_WORDS = 30
+
+# How long the background pipeline will wait for VideoGen to finish a single
+# render / export before giving up (seconds), and how often it polls.
+VIDEOGEN_POLL_INTERVAL_SECONDS = 5
+VIDEOGEN_RENDER_TIMEOUT_SECONDS = 30 * 60
+VIDEOGEN_HTTP_TIMEOUT_SECONDS = 60
 
 # Content Security policy settings
 # http://django-csp.readthedocs.io/en/latest/configuration.html

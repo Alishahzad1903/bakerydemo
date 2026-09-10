@@ -79,6 +79,7 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "django.contrib.sitemaps",
     "bakerydemo.people",
+    "bakerydemo.videogen",
 ]
 
 MIDDLEWARE = [
@@ -273,6 +274,21 @@ WAGTAIL_CONTENT_LANGUAGES = LANGUAGES = [
 ]
 
 WAGTAILIMAGES_AVIF_QUALITY = 60
+
+# VideoGen integration
+# -----------------------------------------------------------------------------
+# Credentials and configuration for the VideoGen API, used by the
+# ``bakerydemo.videogen`` app to turn a published blog article into a short
+# narrated video. These are read from the environment at run time so the same
+# build can run against different VideoGen accounts; never hard-code the values.
+#
+#   VIDEOGEN_API_KEY   (required to actually produce a video) — the bearer token.
+#   VIDEOGEN_BASE_URL  (optional) — override the API base address. When set it is
+#                      used verbatim for every VideoGen call; when empty the
+#                      client falls back to its built-in default
+#                      (https://api.videogen.io).
+VIDEOGEN_API_KEY = os.environ.get("VIDEOGEN_API_KEY", "")
+VIDEOGEN_BASE_URL = os.environ.get("VIDEOGEN_BASE_URL", "")
 
 ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "changeme")
 

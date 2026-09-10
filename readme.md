@@ -210,6 +210,48 @@ wt api pages get 76
 wt api pages create base.StandardPage --parent 60 --title "Demo page"
 ```
 
+### Turning a blog article into a video (VideoGen)
+
+The `bakerydemo.videogen` app adds an additive capability to the v3 API: turning a
+**published blog article** into a short narrated MP4 using [VideoGen](https://videogen.io).
+It does not change any existing page, blog, image or admin behaviour.
+
+Two endpoints extend the v3 API and use its own bearer-token authentication.
+Producing a video is an editorial action, so both are restricted to callers
+permitted to **publish** the target page.
+
+```bash
+# Start producing a video for a published blog article (idempotent — asking
+# again for the same article returns the same job and does not bill twice).
+curl -X POST http://localhost:8000/api/v3-preview/pages/62/video/ \
+  -H "Authorization: Bearer $WAGTAIL_CLI_TOKEN"
+# -> 202 {"videoJobId": "…", "status": "pending"}
+
+# Follow the job to completion. status is one of pending | processing | ready | failed.
+# When ready, downloadUrl points to the finished MP4 on this site; when failed,
+# error explains what went wrong.
+curl http://localhost:8000/api/v3-preview/pages/62/video/<videoJobId>/ \
+  -H "Authorization: Bearer $WAGTAIL_CLI_TOKEN"
+# -> {"videoJobId": "…", "status": "ready", "progressPercentage": 100,
+#     "downloadUrl": "http://localhost:8000/media/videogen/….mp4", "error": null}
+```
+
+The narration is built only from the article's own words — its title and the first
+sentence of its introduction, capped at 30 words — and nothing is sent elsewhere to
+be rewritten. Videos use stock footage with a plain narration voice, are exported
+once at 720p in 16:9, and are stored in the site's media so they stay downloadable.
+
+Configuration (read from the environment at run time; never hard-coded):
+
+| Variable | Required | Description |
+| --- | --- | --- |
+| `VIDEOGEN_API_KEY` | yes | VideoGen API bearer token. |
+| `VIDEOGEN_BASE_URL` | no | Override the VideoGen API base address (used verbatim when set). |
+
+Production normally runs the workflow in a background thread started by the request.
+If the process restarts mid-flight, `python manage.py process_video_jobs` resumes any
+unfinished job without re-producing or re-billing it.
+
 ### Note on demo search
 
 Because we can't (easily) use ElasticSearch for this demo, we use wagtail's native DB search.

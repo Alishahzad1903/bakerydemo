@@ -210,6 +210,40 @@ wt api pages get 76
 wt api pages create base.StandardPage --parent 60 --title "Demo page"
 ```
 
+### Turn a blog article into a short narrated video
+
+A published blog article can be turned into a short, narrated MP4 (stock footage,
+a voiceover, 16:9, 720p, ~10–15s) via [VideoGen](https://videogen.io/), exposed on
+the same v3 API and authenticated the same way. Producing a video is an editorial
+action, so it is restricted to callers permitted to **publish** that page.
+
+Set the credential in the environment before starting the server (never commit it):
+
+```bash
+export VIDEOGEN_API_KEY=…            # required, read at runtime via settings
+# export VIDEOGEN_BASE_URL=…         # optional: overrides the default VideoGen host
+```
+
+Two endpoints, under the existing `pages` resource:
+
+```bash
+BASE=http://localhost:8000/api/v3-preview
+AUTH="Authorization: Bearer $WAGTAIL_CLI_TOKEN"
+
+# Start producing a video for a published blog article (idempotent per article).
+curl -X POST -H "$AUTH" "$BASE/pages/62/video/"
+# -> 202 {"videoJobId": "…"}
+
+# Poll for state; when ready it carries the MP4 download location.
+curl -H "$AUTH" "$BASE/pages/62/video/<videoJobId>/"
+# -> {"status": "processing", "progressPercentage": 42.0, "downloadUrl": null, "error": null}
+# -> {"status": "succeeded",  "progressPercentage": 100.0, "downloadUrl": "https://…mp4", "error": null}
+# -> {"status": "failed",     "progressPercentage": …,     "downloadUrl": null, "error": "…"}
+```
+
+`status` is one of `processing`, `succeeded`, or `failed`. Asking twice for the same
+article returns the same `videoJobId` and never produces (or bills for) a second video.
+
 ### Note on demo search
 
 Because we can't (easily) use ElasticSearch for this demo, we use wagtail's native DB search.

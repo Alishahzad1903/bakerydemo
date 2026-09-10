@@ -79,6 +79,7 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "django.contrib.sitemaps",
     "bakerydemo.people",
+    "bakerydemo.videos",
 ]
 
 MIDDLEWARE = [
@@ -260,6 +261,18 @@ WAGTAILSEARCH_BACKENDS = {
         "INDEX": "bakerydemo",
     },
 }
+
+# VideoGen integration (article -> shareable video).
+# Credentials are read from the environment at run time; no secret value is ever
+# stored in the repository. VIDEOGEN_API_KEY is required to produce a video;
+# VIDEOGEN_BASE_URL is an optional override used verbatim when set (otherwise the
+# SDK default host applies).
+VIDEOGEN_API_KEY = os.environ.get("VIDEOGEN_API_KEY")
+VIDEOGEN_BASE_URL = os.environ.get("VIDEOGEN_BASE_URL")
+VIDEOGEN_TIMEOUT = float(os.environ.get("VIDEOGEN_TIMEOUT", "30"))
+# Narration is the article's title + first sentence of its introduction, capped
+# short to keep the clip (and its cost) small.
+VIDEOGEN_MAX_SCRIPT_WORDS = 30
 
 # Wagtail settings
 WAGTAIL_SITE_NAME = "The Wagtail Bakery"

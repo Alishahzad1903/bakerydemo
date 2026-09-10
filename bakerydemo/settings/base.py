@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     "bakerydemo.locations",
     "bakerydemo.recipes",
     "bakerydemo.search",
+    "bakerydemo.videos",
     "wagtail.embeds",
     "wagtail.sites",
     "wagtail.users",
@@ -260,6 +261,14 @@ WAGTAILSEARCH_BACKENDS = {
         "INDEX": "bakerydemo",
     },
 }
+
+# VideoGen integration
+# Credentials are read from the environment at runtime; never hard-code the values.
+# VIDEOGEN_API_KEY is required to produce videos. VIDEOGEN_BASE_URL is an optional
+# override used verbatim as the API base address for every VideoGen call.
+VIDEOGEN_API_KEY = os.environ.get("VIDEOGEN_API_KEY")
+VIDEOGEN_BASE_URL = os.environ.get("VIDEOGEN_BASE_URL")
+VIDEOGEN_TIMEOUT = float(os.environ.get("VIDEOGEN_TIMEOUT", "30"))
 
 # Wagtail settings
 WAGTAIL_SITE_NAME = "The Wagtail Bakery"

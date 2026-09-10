@@ -79,6 +79,7 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "django.contrib.sitemaps",
     "bakerydemo.people",
+    "bakerydemo.video",
 ]
 
 MIDDLEWARE = [
@@ -133,6 +134,11 @@ else:
             "NAME": os.path.join(
                 BASE_DIR, os.environ.get("DATABASE_NAME", "bakerydemodb")
             ),
+            # Video production runs on a background thread that writes progress
+            # while the API serves reads. Let SQLite wait for a lock rather than
+            # failing immediately under that light concurrency. (No effect on
+            # other database backends.)
+            "OPTIONS": {"timeout": 30},
         }
     }
 
@@ -252,6 +258,30 @@ LOGGING = {
 
 # Override in local settings or replace with your own key. Please don't use our demo key in production!
 GOOGLE_MAP_API_KEY = "AIzaSyD31CT9P9KxvNUJOwDq2kcFEIG8ADgaFgw"
+
+# VideoGen integration (bakerydemo.video)
+# The API key is read from the environment at run time and is NEVER hard-coded
+# here so the same build can run against a different VideoGen account. Only the
+# variable *names* appear in this repository, never their values.
+VIDEOGEN_API_KEY = os.environ.get("VIDEOGEN_API_KEY", "")
+# Optional override for the VideoGen API base address. When set, it is used
+# verbatim for every VideoGen call instead of the SDK default.
+VIDEOGEN_BASE_URL = os.environ.get("VIDEOGEN_BASE_URL") or None
+# Stock-footage visual style for the script-to-video workflow.
+#
+# VideoGen's script-to-video workflow REQUIRES a ``visualStyle``, but the value
+# that selects *stock footage* is not documented by the VideoGen `api` skill
+# that is this integration's sole reference (the skill documents only the
+# AI-image style, which this site must not use — see the gap noted in
+# bakerydemo/video/service.py). It is therefore supplied here as operator
+# configuration rather than guessed in code: set VIDEOGEN_VISUAL_STYLE_TYPE to
+# the stock-footage visual style accepted by your VideoGen account. Left unset,
+# video production fails fast with a clear, typed configuration error instead of
+# ever requesting AI-generated imagery.
+VIDEOGEN_VISUAL_STYLE_TYPE = os.environ.get("VIDEOGEN_VISUAL_STYLE_TYPE") or None
+# Upper bound (seconds) for how long a single video-production job may run
+# before it is abandoned as timed out.
+VIDEOGEN_JOB_TIMEOUT_SECONDS = int(os.environ.get("VIDEOGEN_JOB_TIMEOUT_SECONDS", "1800"))
 
 # Use Elasticsearch as the search backend for extra performance and better search results
 WAGTAILSEARCH_BACKENDS = {

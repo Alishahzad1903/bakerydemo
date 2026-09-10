@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     "bakerydemo.locations",
     "bakerydemo.recipes",
     "bakerydemo.search",
+    "bakerydemo.video",
     "wagtail.embeds",
     "wagtail.sites",
     "wagtail.users",
@@ -260,6 +261,17 @@ WAGTAILSEARCH_BACKENDS = {
         "INDEX": "bakerydemo",
     },
 }
+
+# VideoGen (https://videogen.io) integration for producing article videos.
+# Credentials are read from the environment at run time and never hard-coded.
+# VIDEOGEN_API_KEY is required to produce videos; VIDEOGEN_BASE_URL is an
+# optional override used verbatim as the API base address when set.
+VIDEOGEN_API_KEY = os.environ.get("VIDEOGEN_API_KEY", "")
+VIDEOGEN_BASE_URL = os.environ.get("VIDEOGEN_BASE_URL", "")
+# Optional override for the export resolution constant. Left unset, the export
+# omits ``quality`` and VideoGen applies its default (see
+# bakerydemo.video.services.EXPORT_QUALITY for the rationale).
+VIDEOGEN_EXPORT_QUALITY = os.environ.get("VIDEOGEN_EXPORT_QUALITY", "")
 
 # Wagtail settings
 WAGTAIL_SITE_NAME = "The Wagtail Bakery"

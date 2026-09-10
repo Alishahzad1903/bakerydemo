@@ -210,6 +210,58 @@ wt api pages get 76
 wt api pages create base.StandardPage --parent 60 --title "Demo page"
 ```
 
+### Article videos (VideoGen integration)
+
+The `bakerydemo.videogen` app adds an **additive** capability to the existing v3
+API: turning one published blog article into a short, narrated MP4 using
+[VideoGen](https://videogen.io). It changes none of the existing pages, blog,
+images or admin flows.
+
+Endpoints (mounted under `/api/v3-preview/`, authenticated with the same bearer
+API tokens as the rest of the v3 API, and restricted to callers permitted to
+**publish** the target page):
+
+| Method & path                                          | Purpose                                            |
+| ------------------------------------------------------ | -------------------------------------------------- |
+| `POST /pages/{page_id}/video/`                         | Start producing the video. Returns `videoJobId`.   |
+| `GET  /pages/{page_id}/video/{videoJobId}/`            | Poll `status`, `progressPercentage`, `downloadUrl`, `error`. |
+| `GET  /pages/{page_id}/video/{videoJobId}/download/`   | Download the finished MP4 (redirects to a fresh signed URL). |
+
+Key behaviours:
+
+- The narration is built only from the article's **own words** - its title and
+  the first sentence of its introduction (capped at 30 words for a ~10-15s clip).
+- Production runs off-request (a background thread), so `POST` returns
+  immediately. `status` moves `pending` -> `processing` -> `ready`/`failed`.
+- Requesting a video twice for the same article is **idempotent**: it returns
+  the same job and never starts (or bills) a second production.
+- Provider failures surface as typed exceptions internally and as the `error`
+  field on the status response.
+
+Configuration (read from the environment at runtime, never committed):
+
+```bash
+export VIDEOGEN_API_KEY="sk_videogen_live_..."   # required
+# export VIDEOGEN_BASE_URL="https://api.videogen.io"  # optional override
+```
+
+Example against the seeded demo content (article 62 is *Tracking Wild Yeast*):
+
+```bash
+TOKEN=wagtail_C3qhlJUUj75vWvK5bbcb73bZ4JC4cQKWt
+BASE=http://localhost:8000/api/v3-preview
+
+# Start production -> {"videoJobId": "...", "status": "pending"}
+curl -X POST "$BASE/pages/62/video/" -H "Authorization: Bearer $TOKEN"
+
+# Poll until "status": "ready"
+curl "$BASE/pages/62/video/<videoJobId>/" -H "Authorization: Bearer $TOKEN"
+
+# Download the MP4
+curl -L -o article.mp4 "$BASE/pages/62/video/<videoJobId>/download/" \
+  -H "Authorization: Bearer $TOKEN"
+```
+
 ### Note on demo search
 
 Because we can't (easily) use ElasticSearch for this demo, we use wagtail's native DB search.

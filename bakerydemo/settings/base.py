@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     "bakerydemo.locations",
     "bakerydemo.recipes",
     "bakerydemo.search",
+    "bakerydemo.videos",
     "wagtail.embeds",
     "wagtail.sites",
     "wagtail.users",
@@ -275,6 +276,14 @@ WAGTAIL_CONTENT_LANGUAGES = LANGUAGES = [
 WAGTAILIMAGES_AVIF_QUALITY = 60
 
 ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "changeme")
+
+# VideoGen integration (bakerydemo.videos)
+# Credentials are read from the environment at runtime and are NEVER hard-coded
+# here. VIDEOGEN_API_KEY is required to produce videos; VIDEOGEN_BASE_URL is an
+# optional override used verbatim as the API base address when set (otherwise
+# the VideoGen SDK's default base URL is used).
+VIDEOGEN_API_KEY = os.environ.get("VIDEOGEN_API_KEY")
+VIDEOGEN_BASE_URL = os.environ.get("VIDEOGEN_BASE_URL")
 
 # Content Security policy settings
 # http://django-csp.readthedocs.io/en/latest/configuration.html

@@ -1,0 +1,2 @@
+- [bakerydemo article videos](bakerydemo-article-videos.md) — the bakerydemo.videos app: VideoGen article→video endpoints on the v3 API
+- [VideoGen cheap video params](videogen-cheap-video-params.md) — exact params for stock-footage 720p 16:9 video (discovered by probing, not in docs)

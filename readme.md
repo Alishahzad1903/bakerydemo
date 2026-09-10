@@ -210,6 +210,57 @@ wt api pages get 76
 wt api pages create base.StandardPage --parent 60 --title "Demo page"
 ```
 
+### Article videos (VideoGen)
+
+The `bakerydemo.videos` app adds an **additive** capability to the v3 API: turn a
+published blog article into a short, narrated, shareable MP4 using
+[VideoGen](https://videogen.io). It does not change any existing page, blog,
+image, or admin flow.
+
+Endpoints (mounted under the existing `/api/v3-preview/`, authenticated with the
+same bearer tokens, and restricted to callers permitted to **publish** the page):
+
+| Method & path | Purpose |
+| ------------- | ------- |
+| `POST /api/v3-preview/pages/{page_id}/video/` | Start producing a video for the article. Returns `202` with a top-level `videoJobId`. Idempotent: a repeat request returns the existing job (`200`) — it never produces or bills a second video. |
+| `GET /api/v3-preview/pages/{page_id}/video/{videoJobId}/` | Report the job's `status` (`pending`/`processing`/`ready`/`failed`), `progressPercentage`, `downloadUrl` (when ready), and `error` (when failed). |
+| `GET /api/v3-preview/pages/{page_id}/video/{videoJobId}/download/` | Redirect to the finished MP4 (a freshly signed URL, valid for as long as the article exists). |
+
+The narration is built **only** from the article's own words — its title and the
+first sentence of its introduction — and is capped at 30 words; the article is
+never sent elsewhere to be rewritten. Each video is produced in a fixed, low-cost
+shape: stock footage, a synthesized voice (no avatar/presenter), 16:9, and a
+single 720p export.
+
+Configuration (read from the environment at runtime; never hard-code the values):
+
+```bash
+export VIDEOGEN_API_KEY=sk_videogen_live_...   # required
+export VIDEOGEN_BASE_URL=https://api.videogen.io  # optional override
+```
+
+Example:
+
+```bash
+export TOKEN=wagtail_C3qhlJUUj75vWvK5bbcb73bZ4JC4cQKWt   # a user who can publish
+
+# Start a video for the "Tracking Wild Yeast" article (page 62 in the demo data)
+curl -sX POST -H "Authorization: Bearer $TOKEN" \
+  http://localhost:8000/api/v3-preview/pages/62/video/
+# -> {"videoJobId": "…", "status": "pending", "progressPercentage": 0, …}
+
+# Poll until status is "ready"
+curl -s -H "Authorization: Bearer $TOKEN" \
+  http://localhost:8000/api/v3-preview/pages/62/video/<videoJobId>/
+
+# Download the finished MP4 (follows the redirect to the signed URL)
+curl -sL -H "Authorization: Bearer $TOKEN" -o article.mp4 \
+  http://localhost:8000/api/v3-preview/pages/62/video/<videoJobId>/download/
+```
+
+Production runs in a background thread (the project intentionally has no task
+queue); a real deployment would move this to a worker such as Celery or RQ.
+
 ### Note on demo search
 
 Because we can't (easily) use ElasticSearch for this demo, we use wagtail's native DB search.

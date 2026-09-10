@@ -210,6 +210,45 @@ wt api pages get 76
 wt api pages create base.StandardPage --parent 60 --title "Demo page"
 ```
 
+### Article videos (VideoGen)
+
+An additive capability turns a **published blog article** into a short narrated
+MP4 via [VideoGen](https://videogen.io), exposed on the same v3 API. The narration
+is built only from the article's **title and the first sentence of its
+introduction** (≤ 30 words → a ~10–15s clip); the body is never used and the text
+is never sent anywhere to be rewritten. Videos use stock footage and a voice only
+(no avatar), and are exported once at 720p, 16:9.
+
+Configure credentials in the environment (never in the repo):
+
+```bash
+export VIDEOGEN_API_KEY=sk_videogen_live_...   # required
+# export VIDEOGEN_BASE_URL=https://api.videogen.io   # optional override, used verbatim
+```
+
+Two endpoints, authenticated with the same bearer tokens as the rest of the v3
+API. Producing a video is an editorial action, so both require the caller to be
+permitted to **publish** the page (e.g. the `admin` or `moderator` demo tokens;
+`editor` is refused).
+
+```bash
+BASE=http://localhost:8000/api/v3-preview
+TOKEN=wagtail_C3qhlJUUj75vWvK5bbcb73bZ4JC4cQKWt   # admin (can publish)
+
+# Start producing a video for a published article (page 62 = "Tracking Wild Yeast").
+# Returns immediately: { "videoJobId": "..." }
+curl -X POST "$BASE/pages/62/video/" -H "Authorization: Bearer $TOKEN"
+
+# Poll the job. status is one of: processing | ready | failed.
+# When ready, downloadUrl carries the MP4; when failed, error says why.
+curl "$BASE/pages/62/video/<videoJobId>/" -H "Authorization: Bearer $TOKEN"
+```
+
+Asking for a video twice for the same article returns the **same** job — it never
+produces or bills a second video. A ready video stays downloadable through the
+`GET` endpoint for as long as the article exists (the signed URL is refreshed
+automatically). Provider failures are surfaced as the job's `error`.
+
 ### Note on demo search
 
 Because we can't (easily) use ElasticSearch for this demo, we use wagtail's native DB search.

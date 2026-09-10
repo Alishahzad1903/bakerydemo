@@ -79,6 +79,7 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "django.contrib.sitemaps",
     "bakerydemo.people",
+    "bakerydemo.video",
 ]
 
 MIDDLEWARE = [
@@ -252,6 +253,19 @@ LOGGING = {
 
 # Override in local settings or replace with your own key. Please don't use our demo key in production!
 GOOGLE_MAP_API_KEY = "AIzaSyD31CT9P9KxvNUJOwDq2kcFEIG8ADgaFgw"
+
+# VideoGen integration (turn a published blog article into a short narrated video).
+# Credentials are read from the environment at runtime and are NEVER hard-coded here.
+#   VIDEOGEN_API_KEY  - required bearer token for the VideoGen account (paid).
+#   VIDEOGEN_BASE_URL - optional override; when set it is used verbatim as the API
+#                       base address for every VideoGen call.
+VIDEOGEN_API_KEY = os.environ.get("VIDEOGEN_API_KEY")
+VIDEOGEN_BASE_URL = os.environ.get("VIDEOGEN_BASE_URL", "https://api.videogen.io")
+# Per-request HTTP timeout (seconds) for calls to VideoGen.
+VIDEOGEN_REQUEST_TIMEOUT = float(os.environ.get("VIDEOGEN_REQUEST_TIMEOUT", "30"))
+# Polling cadence and ceiling (seconds) while a video is being produced/exported.
+VIDEOGEN_POLL_INTERVAL = float(os.environ.get("VIDEOGEN_POLL_INTERVAL", "5"))
+VIDEOGEN_POLL_TIMEOUT = float(os.environ.get("VIDEOGEN_POLL_TIMEOUT", "900"))
 
 # Use Elasticsearch as the search backend for extra performance and better search results
 WAGTAILSEARCH_BACKENDS = {
